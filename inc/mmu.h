@@ -90,7 +90,7 @@
 
 #define CR4_PCE		0x00000100	// Performance counter enable
 #define CR4_MCE		0x00000040	// Machine Check Enable
-#define CR4_PSE		0x00000010	// Page Size Extensions
+#define CR4_PSE		0x00000010	// PTE_ADDR Size Extensions
 #define CR4_DE		0x00000008	// Debugging Extensions
 #define CR4_TSD		0x00000004	// Time Stamp Disable
 #define CR4_PVI		0x00000002	// Protected-Mode Virtual Interrupts
