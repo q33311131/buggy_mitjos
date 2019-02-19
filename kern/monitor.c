@@ -26,6 +26,7 @@ static struct Command commands[] = {
 	{ "help", "Display this list of commands", mon_help },
 	{ "kerninfo", "Display information about the kernel", mon_kerninfo },
 };
+#define NCOMMANDS (sizeof(commands)/sizeof(commands[0]))
 
 /***** Implementations of basic kernel monitor commands *****/
 
@@ -34,7 +35,7 @@ mon_help(int argc, char **argv, struct Trapframe *tf)
 {
 	int i;
 
-	for (i = 0; i < ARRAY_SIZE(commands); i++)
+	for (i = 0; i < NCOMMANDS; i++)
 		cprintf("%s - %s\n", commands[i].name, commands[i].desc);
 	return 0;
 }
@@ -55,44 +56,45 @@ mon_kerninfo(int argc, char **argv, struct Trapframe *tf)
 	return 0;
 }
 
-
 int
 mon_backtrace(int argc, char **argv, struct Trapframe *tf)
 {
+	// Your code here.
 	cprintf("Stack backtrace:\n");
 	int *ebp = (int *)read_ebp();
 	while (ebp) {
-	unsigned int pre_ebp = ebp[0];
-	unsigned int ret_addr = ebp[1];
-	unsigned int arg0 = ebp[2];
-	unsigned int arg1 = ebp[3];
-	unsigned int arg2 = ebp[4];
-	unsigned int arg3 = ebp[5];
-	unsigned int arg4 = ebp[6];
-	
-	struct Eipdebuginfo debug_info;
-	debuginfo_eip(ret_addr, &debug_info);
-	
-	cprintf(" ebp %08x eip %08x args %08x %08x %08x %08x %08x\n"
-	" %s:%d: %.*s+%u\n",
-	ebp,
-	ret_addr,
-	arg0,
-	arg1,
-	arg2,
-	arg3,
-	arg4,
-	debug_info.eip_file,
-	debug_info.eip_line,
-	debug_info.eip_fn_namelen,
-	debug_info.eip_fn_name,
-	ret_addr - debug_info.eip_fn_addr
-	);	
-	ebp = (int *)pre_ebp;
+		unsigned int pre_ebp = ebp[0];
+		unsigned int ret_addr = ebp[1];
+		unsigned int arg0 = ebp[2];
+		unsigned int arg1 = ebp[3];
+		unsigned int arg2 = ebp[4];
+		unsigned int arg3 = ebp[5];
+		unsigned int arg4 = ebp[6];
+
+		struct Eipdebuginfo debug_info;
+		debuginfo_eip(ret_addr, &debug_info);
+
+		cprintf(" ebp %08x eip %08x args %08x %08x %08x %08x %08x\n"
+			" %s:%d: %.*s+%u\n",
+			ebp,
+			ret_addr,
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+			debug_info.eip_file,
+			debug_info.eip_line,
+			debug_info.eip_fn_namelen,
+			debug_info.eip_fn_name,
+			ret_addr - debug_info.eip_fn_addr
+			);      
+		ebp = (int *)pre_ebp;
 	}
 	
 	return 0;
 }
+
 
 /***** Kernel monitor command interpreter *****/
 
@@ -130,7 +132,7 @@ runcmd(char *buf, struct Trapframe *tf)
 	// Lookup and invoke the command
 	if (argc == 0)
 		return 0;
-	for (i = 0; i < ARRAY_SIZE(commands); i++) {
+	for (i = 0; i < NCOMMANDS; i++) {
 		if (strcmp(argv[0], commands[i].name) == 0)
 			return commands[i].func(argc, argv, tf);
 	}
@@ -146,13 +148,15 @@ monitor(struct Trapframe *tf)
 	cprintf("Welcome to the JOS kernel monitor!\n");
 	cprintf("Type 'help' for a list of commands.\n");
 
-	if (tf != NULL)
+	if (tf != NULL){
+		cprintf("now for reg!!\n");
 		print_trapframe(tf);
+	}
 
 	while (1) {
 		buf = readline("K> ");
 		if (buf != NULL)
 			if (runcmd(buf, tf) < 0)
 				break;
+		}
 	}
-}

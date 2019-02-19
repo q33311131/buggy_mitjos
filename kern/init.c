@@ -68,7 +68,7 @@ _panic(const char *file, int line, const char *fmt,...)
 	panicstr = fmt;
 
 	// Be extra sure that the machine is in as reasonable state
-	asm volatile("cli; cld");
+	__asm __volatile("cli; cld");
 
 	va_start(ap, fmt);
 	cprintf("kernel panic at %s:%d: ", file, line);
