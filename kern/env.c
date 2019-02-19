@@ -472,17 +472,15 @@ env_destroy(struct Env *e)
 	}
 
 	env_free(e);
-<<<<<<< HEAD
+    
 
 	if (curenv == e) {
 		curenv = NULL;
 		sched_yield();
 	}
-=======
 	cprintf("Destroyed the only environment - nothing more to do!\n");
 	while (1)
 		monitor(NULL);
->>>>>>> lab3
 }
 
 
@@ -495,15 +493,12 @@ env_destroy(struct Env *e)
 void
 env_pop_tf(struct Trapframe *tf)
 {
-<<<<<<< HEAD
+    
 	// Record the CPU we are running on for user-space debugging
 	curenv->env_cpunum = cpunum();
 
 	asm volatile(
 		"\tmovl %0,%%esp\n"
-=======
-	__asm __volatile("movl %0,%%esp\n"
->>>>>>> lab3
 		"\tpopal\n"
 		"\tpopl %%es\n"
 		"\tpopl %%ds\n"
