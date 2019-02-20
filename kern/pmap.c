@@ -264,6 +264,12 @@ mem_init_mp(void)
 	//     Permissions: kernel RW, user NONE
 	//
 	// LAB 4: Your code here:
+	uint32_t kstacktop_i;
+	int i;
+	for(i = 0; i < NCPU; i++) {
+		kstacktop_i = KSTACKTOP - i * (KSTKSIZE + KSTKGAP);
+		boot_map_region(kern_pgdir, kstacktop_i - KSTKSIZE, KSTKSIZE, PADDR(&percpu_kstacks[i]), PTE_W);
+	}
 
 }
 
@@ -303,13 +309,15 @@ page_init(void)
 	// Change the code to reflect this.
 	// NB: DO NOT actually touch the physical memory corresponding to
 	// free pages!
-	size_t i;
 	page_free_list = NULL;
 	pages[0].pp_ref = 1;
 	pages[0].pp_link = NULL;
 	uint32_t limit=((uint32_t)boot_alloc(0) - KERNBASE) / PGSIZE + (EXTPHYSMEM - IOPHYSMEM)/ PGSIZE;
-	for(int i = 1; i < npages ; i++) {
-		if(i >= npages_basemem && i < limit)
+	int i;
+	for(i = 1; i < npages ; i++) {
+		if(i == MPENTRY_PADDR/PGSIZE)
+			pages[i].pp_ref = 1;
+		else if(i >= npages_basemem && i < limit)
 			pages[i].pp_ref = 1;
 		else{
 			pages[i].pp_ref = 0;
@@ -440,7 +448,8 @@ pgdir_walk(pde_t *pgdir, const void *va, int create)
        // Fill this function 
        ROUNDUP(size,PGSIZE);
        pte_t* pte = NULL;
-       for(int i = 0 ; i < size/PGSIZE ;i++, va += PGSIZE, pa += PGSIZE) {
+       int i;
+       for(i = 0 ; i < size/PGSIZE ;i++, va += PGSIZE, pa += PGSIZE) {
             pte = pgdir_walk(pgdir,(void*)va,1);
             if(!pte) 
                 return;
@@ -615,7 +624,8 @@ user_mem_check(struct Env *env, const void *va, size_t len, int perm)
 	void *st = ROUNDDOWN((void *)va, PGSIZE); 
 	void *end = ROUNDUP(((void *)va + len), PGSIZE);
 	pte_t *cur = NULL;
-	for(void * i = st; i < end; i += PGSIZE) {
+	void *i;
+	for(i = st; i < end; i += PGSIZE) {
 		cur = pgdir_walk(env->env_pgdir, i, 0);
 		if((int)i > ULIM || ((uint32_t)(*cur) & perm) != perm || cur == NULL) {
 			  if(i == ROUNDDOWN((char *)va, PGSIZE)) {

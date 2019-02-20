@@ -66,7 +66,7 @@ endif
 # try to generate a unique GDB port
 GDBPORT	:= $(shell expr `id -u` % 5000 + 25000)
 
-CC	:= $(GCCPREFIX)gcc -pipe
+CC	:= $(GCCPREFIX)gcc -pipe --std=c99
 AS	:= $(GCCPREFIX)as
 AR	:= $(GCCPREFIX)ar
 LD	:= $(GCCPREFIX)ld
@@ -102,7 +102,7 @@ ULDFLAGS := -T user/user.ld
 GCC_LIB := $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
 
 # Lists that the */Makefrag makefile fragments will add to
-OBJDIRS :=
+OBJDIRS := 
 
 # Make sure that 'all' is the first target
 all:
@@ -139,9 +139,12 @@ include lib/Makefrag
 include user/Makefrag
 
 
+CPUS ?= 1
+
 QEMUOPTS = -hda $(OBJDIR)/kern/kernel.img -serial mon:stdio -gdb tcp::$(GDBPORT)
 QEMUOPTS += $(shell if $(QEMU) -nographic -help | grep -q '^-D '; then echo '-D qemu.log'; fi)
 IMAGES = $(OBJDIR)/kern/kernel.img
+QEMUOPTS += -smp $(CPUS)
 QEMUOPTS += $(QEMUEXTRA)
 
 .gdbinit: .gdbinit.tmpl
@@ -325,3 +328,4 @@ always:
 
 .PHONY: all always \
 	handin git-handin tarball tarball-pref clean realclean distclean grade handin-prep handin-check
+
